@@ -1,0 +1,23 @@
+name: flutter_video_player
+description: A new Flutter package project.
+version: 0.0.1
+author: Kishor Mainali
+homepage: https://github.com/kishor98100/flutter_video_player
+
+environment:
+  sdk: ">=2.7.0 <3.0.0"
+  flutter: ">=1.17.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  video_player: ^1.0.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+
+ 
