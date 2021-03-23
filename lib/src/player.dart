@@ -63,12 +63,12 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer>
         _controller = VideoPlayerController.network(widget.videoUrl);
         break;
     }
-    _controller.addListener(() {
-      if (!_controller.value.isPlaying &&
-          _controller.value.position == _controller.value.duration) {
-        _controller.seekTo(Duration.zero);
-      }
-    });
+    // _controller.addListener(() {
+    //   if (!_controller.value.isPlaying &&
+    //       _controller.value.position == _controller.value.duration) {
+    //     _controller.seekTo(Duration.zero);
+    //   }
+    // });
     _animationController = AnimationController(
         vsync: this,
         value: _controller.value.isPlaying ? 1 : 0,
@@ -81,6 +81,7 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer>
     if (widget.autoPlay != oldWidget.autoPlay) {
       if (widget.autoPlay) {
         _controller.play();
+        _controller.setLooping(true);
       } else {
         _controller.pause();
       }
@@ -98,6 +99,7 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer>
   void didPopNext() {
     if (!_controller.value.isPlaying && widget.autoPlay) {
       _controller.play();
+      _controller.setLooping(true);
     } else {
       _controller.pause();
     }
@@ -131,69 +133,119 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer>
   }
 
   Widget _buildFeedPlayer() {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        FutureBuilder(
-          future: _controller.initialize(),
-          builder: (BuildContext context, AsyncSnapshot snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              return AspectRatio(
+    return FutureBuilder(
+      future: _controller.initialize(),
+      builder: (BuildContext context, AsyncSnapshot snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              AspectRatio(
                 aspectRatio: _controller.value.aspectRatio,
                 child: VideoPlayer(_controller),
-              );
-            } else {
-              return Center(
-                child: CircularProgressIndicator(),
-              );
-            }
-          },
-        ),
-        Positioned(
-          top: 10.0,
-          right: 10.0,
-          height: 25.0,
-          child: DurationTimer(controller: _controller),
-        ),
-      ],
+              ),
+              Positioned(
+                top: 10.0,
+                right: 10.0,
+                height: 25.0,
+                child: DurationTimer(controller: _controller),
+              ),
+              Positioned(
+                bottom: 10.0,
+                right: 10.0,
+                child: IconButton(
+                  icon: _controller.value.volume == 0
+                      ? Icon(Icons.volume_up)
+                      : Icon(Icons.volume_off),
+                  onPressed: () {
+                    setState(() {
+                      if (_controller.value.volume == 0) {
+                        _controller.setVolume(1.0);
+                      } else {
+                        _controller.setVolume(0.0);
+                      }
+                    });
+                  },
+                ),
+              ),
+            ],
+          );
+        } else {
+          return Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+      },
     );
   }
 
   _buildFullPlayer() {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        FutureBuilder(
-          future: _controller.initialize(),
-          builder: (BuildContext context, AsyncSnapshot snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              return AspectRatio(
+    return FutureBuilder(
+      future: _controller.initialize(),
+      builder: (BuildContext context, AsyncSnapshot snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              AspectRatio(
                 aspectRatio: _controller.value.aspectRatio,
                 child: VideoPlayer(_controller),
-              );
-            } else {
-              return Center(
-                child: CircularProgressIndicator(),
-              );
-            }
-          },
-        ),
-        Positioned(
-          bottom: 0.0,
-          left: 0.0,
-          right: 0.0,
-          child: Container(
-            child: Row(
-              children: [
-                AnimatedIcon(
-                  icon: AnimatedIcons.play_pause,
-                  progress: _animationController,
+              ),
+              Positioned(
+                bottom: 0.0,
+                left: 0.0,
+                right: 0.0,
+                height: 40.0,
+                child: Container(
+                  child: Row(
+                    children: [
+                      InkWell(
+                        onTap: () {
+                          setState(() {
+                            if (_controller.value.isPlaying) {
+                              _controller.pause();
+                            } else {
+                              _controller.play();
+                            }
+                          });
+                        },
+                        child: AnimatedIcon(
+                          icon: AnimatedIcons.play_pause,
+                          progress: _animationController,
+                        ),
+                      ),
+                      Expanded(
+                        child: VideoProgressIndicator(
+                          _controller,
+                          allowScrubbing: true,
+                        ),
+                      ),
+                      IconButton(
+                        icon: _controller.value.volume == 0
+                            ? Icon(Icons.volume_up)
+                            : Icon(Icons.volume_off),
+                        onPressed: () {
+                          setState(() {
+                            if (_controller.value.volume == 0) {
+                              _controller.setVolume(1.0);
+                            } else {
+                              _controller.setVolume(0.0);
+                            }
+                          });
+                        },
+                      )
+                    ],
+                  ),
                 ),
-              ],
-            ),
-          ),
-        ),
-      ],
+              ),
+            ],
+          );
+        } else {
+          return Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+      },
     );
   }
 }
