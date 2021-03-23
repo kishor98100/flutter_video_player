@@ -80,7 +80,6 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer>
     if (widget.autoPlay != oldWidget.autoPlay) {
       if (widget.autoPlay) {
         _controller.play();
-        _controller.setLooping(true);
       } else {
         _controller.pause();
       }
@@ -98,7 +97,6 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer>
   void didPopNext() {
     if (!_controller.value.isPlaying && widget.autoPlay) {
       _controller.play();
-      _controller.setLooping(true);
     } else {
       _controller.pause();
     }
@@ -136,7 +134,7 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer>
       future: _controller.initialize(),
       builder: (BuildContext context, AsyncSnapshot snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
-          if (widget.autoPlay) {
+          if (widget.autoPlay && !_controller.value.isPlaying) {
             _controller.play();
           }
           return Stack(
