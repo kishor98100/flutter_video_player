@@ -51,6 +51,11 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer>
 
   @override
   void initState() {
+    init();
+    super.initState();
+  }
+
+  void init() async {
     switch (widget.fileType) {
       case FileType.asset:
         _controller = VideoPlayerController.asset(widget.videoUrl);
@@ -62,17 +67,21 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer>
         _controller = VideoPlayerController.network(widget.videoUrl);
         break;
     }
-    // _controller.addListener(() {
-    //   if (!_controller.value.isPlaying &&
-    //       _controller.value.position == _controller.value.duration) {
-    //     _controller.seekTo(Duration.zero);
-    //   }
-    // });
+    await _controller.initialize().then((value) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+    _controller.addListener(() {
+      if (!_controller.value.isPlaying &&
+          _controller.value.position == _controller.value.duration) {
+        _controller.seekTo(Duration.zero);
+      }
+    });
     _animationController = AnimationController(
         vsync: this,
         value: _controller.value.isPlaying ? 1 : 0,
         duration: const Duration(milliseconds: 400));
-    super.initState();
   }
 
   @override
@@ -130,14 +139,8 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer>
   }
 
   Widget _buildFeedPlayer() {
-    return FutureBuilder(
-      future: _controller.initialize(),
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
-          if (widget.autoPlay && !_controller.value.isPlaying) {
-            _controller.play();
-          }
-          return Stack(
+    return _controller.value.initialized
+        ? Stack(
             fit: StackFit.expand,
             children: [
               AspectRatio(
@@ -158,31 +161,26 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer>
                       ? Icon(Icons.volume_up)
                       : Icon(Icons.volume_off),
                   onPressed: () {
-                    if (_controller.value.volume == 0) {
-                      _controller.setVolume(100.0);
-                    } else {
-                      _controller.setVolume(0.0);
-                    }
+                    setState(() {
+                      if (_controller.value.volume == 0) {
+                        _controller.setVolume(100.0);
+                      } else {
+                        _controller.setVolume(0.0);
+                      }
+                    });
                   },
                 ),
               ),
             ],
-          );
-        } else {
-          return Center(
+          )
+        : Center(
             child: CircularProgressIndicator(),
           );
-        }
-      },
-    );
   }
 
   _buildFullPlayer() {
-    return FutureBuilder(
-      future: _controller.initialize(),
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
-          return Stack(
+    return _controller.value.initialized
+        ? Stack(
             fit: StackFit.expand,
             children: [
               AspectRatio(
@@ -199,11 +197,13 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer>
                     children: [
                       InkWell(
                         onTap: () {
-                          if (_controller.value.isPlaying) {
-                            _controller.pause();
-                          } else {
-                            _controller.play();
-                          }
+                          setState(() {
+                            if (_controller.value.isPlaying) {
+                              _controller.pause();
+                            } else {
+                              _controller.play();
+                            }
+                          });
                         },
                         child: AnimatedIcon(
                           icon: AnimatedIcons.play_pause,
@@ -221,11 +221,13 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer>
                             ? Icon(Icons.volume_up)
                             : Icon(Icons.volume_off),
                         onPressed: () {
-                          if (_controller.value.volume == 0) {
-                            _controller.setVolume(100.0);
-                          } else {
-                            _controller.setVolume(0.0);
-                          }
+                          setState(() {
+                            if (_controller.value.volume == 0) {
+                              _controller.setVolume(100.0);
+                            } else {
+                              _controller.setVolume(0.0);
+                            }
+                          });
                         },
                       )
                     ],
@@ -233,14 +235,10 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer>
                 ),
               ),
             ],
-          );
-        } else {
-          return Center(
+          )
+        : Center(
             child: CircularProgressIndicator(),
           );
-        }
-      },
-    );
   }
 }
 
