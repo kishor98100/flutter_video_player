@@ -47,8 +47,6 @@ class FlutterVideoPlayer extends StatefulWidget {
 class _FlutterVideoPlayerState extends State<FlutterVideoPlayer>
     with RouteAware, SingleTickerProviderStateMixin {
   VideoPlayerController _controller;
-  AnimationController _animationController;
-
   @override
   void initState() {
     init();
@@ -78,10 +76,6 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer>
         _controller.seekTo(Duration.zero);
       }
     });
-    _animationController = AnimationController(
-        vsync: this,
-        value: _controller.value.isPlaying ? 1 : 0,
-        duration: const Duration(milliseconds: 400));
   }
 
   @override
@@ -139,6 +133,9 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer>
   }
 
   Widget _buildFeedPlayer() {
+    if (_controller.value.initialized && widget.autoPlay) {
+      _controller.play();
+    }
     return _controller.value.initialized
         ? Stack(
             fit: StackFit.expand,
@@ -195,8 +192,8 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer>
                 child: Container(
                   child: Row(
                     children: [
-                      InkWell(
-                        onTap: () {
+                      IconButton(
+                        onPressed: () {
                           setState(() {
                             if (_controller.value.isPlaying) {
                               _controller.pause();
@@ -205,10 +202,9 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer>
                             }
                           });
                         },
-                        child: AnimatedIcon(
-                          icon: AnimatedIcons.play_pause,
-                          progress: _animationController,
-                        ),
+                        icon: _controller.value.isPlaying
+                            ? Icon(Icons.pause)
+                            : Icon(Icons.play_arrow),
                       ),
                       Expanded(
                         child: VideoProgressIndicator(
